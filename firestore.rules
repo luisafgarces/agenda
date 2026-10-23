@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------------------
+    // Solo entran las dos personas de la agenda (por su correo de acceso).
+    // Si cambias los usuarios, cambia estos dos correos.
+    // ---------------------------------------------------------------
+    function permitido() {
+      return request.auth != null
+        && request.auth.token.email in ['mama@agenda-compartida.app', 'hijo@agenda-compartida.app'];
+    }
+
+    // Campos que puede tener una tarea, un evento o una idea. Cualquier otro se rechaza.
+    function camposValidos(d) {
+      return d.keys().hasOnly([
+        'tipo','owner','compartido','creado','actualizado',
+        'titulo','area','fecha','hora','prio','pasos','rep','notas','hecha','hechaEn','para',
+        'inicio','fin','todoDia','lugar','repHasta',
+        'texto','archivada'
+      ]);
+    }
+    function tamanosValidos(d) {
+      return (!('titulo' in d) || (d.titulo is string && d.titulo.size() <= 200))
+        && (!('texto'  in d) || (d.texto  is string && d.texto.size()  <= 300))
+        && (!('notas'  in d) || (d.notas  is string && d.notas.size()  <= 500))
+        && (!('pasos'  in d) || (d.pasos  is list   && d.pasos.size()  <= 40));
+    }
+
+    match /items/{itemId} {
+      // Lo ves si es compartido o si es tuyo. Lo "Solo yo" de la otra persona nunca te llega.
+      allow read: if permitido()
+        && (resource.data.compartido == true || resource.data.owner == request.auth.uid);
+
+      // Solo puedes crear cosas a tu nombre.
+      allow create: if permitido()
+        && request.resource.data.owner == request.auth.uid
+        && request.resource.data.compartido is bool
+        && request.resource.data.tipo in ['tarea','evento','idea']
+        && camposValidos(request.resource.data)
+        && tamanosValidos(request.resource.data);
+
+      // El dueño puede cambiar todo (menos el dueño y el tipo).
+      // La otra persona solo puede editar lo que está compartido, y no puede dejar de compartirlo.
+      allow update: if permitido()
+        && request.resource.data.owner == resource.data.owner
+        && request.resource.data.tipo == resource.data.tipo
+        && request.resource.data.compartido is bool
+        && camposValidos(request.resource.data)
+        && tamanosValidos(request.resource.data)
+        && (
+          resource.data.owner == request.auth.uid
+          || (resource.data.compartido == true && request.resource.data.compartido == true)
+        );
+
+      // Solo el dueño borra.
+      allow delete: if permitido() && resource.data.owner == request.auth.uid;
+    }
+
+    // Nombre de cada persona (cada una escribe solo el suyo).
+    match /miembros/{uid} {
+      allow read: if permitido();
+      allow create, update: if permitido()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['nombre','creado'])
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() <= 24;
+      allow delete: if false;
+    }
+
+    // Áreas y nombre de la agenda (compartidos por las dos personas).
+    match /config/{docId} {
+      allow read: if permitido();
+      allow write: if permitido() && docId in ['areas','app'];
+    }
+
+    // Todo lo demás está cerrado.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
