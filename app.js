@@ -282,7 +282,7 @@ const tabsDef = () => fut()
 function montarShell(){
   $('#root').innerHTML =
     '<div id="app">'
-    + '<header class="top"><div class="brand"><span class="ico">📅</span><span class="n" id="app-nombre">'+esc(S.appNombre)+'</span></div>'
+    + '<header class="top"><div class="brand"><span class="ico"><img src="icon-192.png" alt=""></span><span class="n" id="app-nombre">'+esc(S.appNombre)+'</span></div>'
     + '<div class="top-r"><span class="sync" id="sync" title="Conectado"></span><button class="avatar" id="avatar" data-act="tab" data-v="mas" aria-label="Mi cuenta">?</button></div></header>'
     + '<main id="view"></main>'
     + '<button class="fab" id="fab" data-act="fab" aria-label="Agregar">+</button>'

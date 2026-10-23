@@ -1,5 +1,5 @@
 /* Service worker: la agenda abre aunque no haya internet (muestra lo último guardado). */
-const CACHE = 'agenda-v1.3';
+const CACHE = 'agenda-v1.4';
 const SHELL = ['./', 'index.html', 'app.css', 'app.js', 'manifest.json',
   'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'icon-maskable-512.png'];
 
