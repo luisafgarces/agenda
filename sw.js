@@ -1,7 +1,7 @@
 /* Service worker: la agenda abre aunque no haya internet (muestra lo último guardado). */
-const CACHE = 'agenda-v1.2';
+const CACHE = 'agenda-v1.3';
 const SHELL = ['./', 'index.html', 'app.css', 'app.js', 'manifest.json',
-  'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/icon-maskable-512.png'];
+  'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'icon-maskable-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(SHELL.map(u => c.add(u).catch(()=>{})))));
